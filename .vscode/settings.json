@@ -3,5 +3,5 @@
     "python.linting.enabled": true,
     "editor.formatOnSave": true,
     "python.linting.banditEnabled": false,
-    "python.linting.lintOnSave": true
+    "python.linting.lintOnSave": true,
 }
