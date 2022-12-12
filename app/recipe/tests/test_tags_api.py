@@ -16,9 +16,14 @@ from recipe.serializers import TagSerializer
 TAGS_URL = reverse('recipe:tag-list')
 
 
+def detail_url(tag_id):
+    """create and return a tag detail url"""
+    return reverse('recipe:tag-detail', args=[tag_id])
+
+
 def create_user(email='user@example', password='testpass123'):
     """Create and return a user"""
-    return get_user_model().objects.creat_user(email, password)
+    return get_user_model().objects.create_user(email, password)
 
 
 class PublicTagsApiTests(TestCase):
@@ -34,35 +39,48 @@ class PublicTagsApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    class PrivateTagsApiTest(TestCase):
-        """ test autehnticate API requests"""
 
-        def setUp(self):
-            self.user = create_user()
-            self.client = APIClient()
-            self.client.force_authenticate(self.user)
+class PrivateTagsApiTest(TestCase):
+    """ test autehnticate API requests"""
 
-        def test_retrieve_tags(self):
-            """test retrieving a list of objects """
-            Tag.objects.create(user=self.user, name='Vegan')
-            Tag.objects.create(user=self.user, name='Dessert')
+    def setUp(self):
+        self.user = create_user()
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
-            res = self.client.get(TAGS_URL)
+    def test_retrieve_tags(self):
+        """test retrieving a list of objects """
+        Tag.objects.create(user=self.user, name='Vegan')
+        Tag.objects.create(user=self.user, name='Dessert')
 
-            tags = Tag.objects.all().order_by('-name')
-            serializer = TagSerializer(tags, many=True)
-            self.assertEqual(res.status_code, status.HTTP_200_OK)
-            self.asserEqual(res.data, serializer.data)
+        res = self.client.get(TAGS_URL)
 
-        def test_tags_limioted_yo_user(self):
-            """test list of tags is limited to authenticated user"""
-            user2 = create_user(email='user2@example.com')
-            Tag.objects.create(user=user2, name='Fruity')
-            tag = Tag.objects.create(user=self.user, name='comfort food')
+        tags = Tag.objects.all().order_by('-name')
+        serializer = TagSerializer(tags, many=True)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
 
-            res = self.client.get(TAGS_URL)
+    def test_tags_limited_to_user(self):
+        """test list of tags is limited to authenticated user"""
+        user2 = create_user(email='user2@example.com')
+        Tag.objects.create(user=user2, name='Fruity')
+        tag = Tag.objects.create(user=self.user, name='comfort food')
 
-            self.assertEqual(res.status_code, status.HTTP_200_OK)
-            self.assertEqual(len(res.data), 1)
-            self.assertEqual(res.data[0]['name'], tag.name)
-            self.assertEqual(res.data[0]['id'], tag.id)
+        res = self.client.get(TAGS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['name'], tag.name)
+        self.assertEqual(res.data[0]['id'], tag.id)
+
+    def test_update_tag(self):
+        """Test updateing a tag"""
+        tag = Tag.objects.create(user=self.user, name='after dinner')
+
+        payload = {'name': 'dessert'}
+        url = detail_url(tag.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        tag.refresh_from_db()
+        self.assertEqual(tag.name, payload['name'])
