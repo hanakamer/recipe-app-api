@@ -65,7 +65,7 @@ class PrivateRecipeAPITests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(email="user@example.com", password='test123')
+        self.user = create_user(email='user@example.com', password='test123')
         self.client.force_authenticate(self.user)
 
     def test_retrieve_recipes(self):
@@ -261,7 +261,7 @@ class PrivateRecipeAPITests(TestCase):
 
     def test_update_recipe_assign_tag(self):
         """test assigining an existing tag when updating recipe"""
-        tag_breakfast = Tag.objects.create(user=self.user, name="breakfast")
+        tag_breakfast = Tag.objects.create(user=self.user, name='breakfast')
         recipe = create_recipe(user=self.user)
         recipe.tags.add(tag_breakfast)
 
@@ -294,7 +294,7 @@ class PrivateRecipeAPITests(TestCase):
             'title': 'cauliflower tacos',
             'time_minutes': 60,
             'price': Decimal('4.30'),
-            'ingredients': [{'name', 'cauliflower'}, {'name': 'salt'}],
+            'ingredients': [{'name': 'cauliflower'}, {'name': 'salt'}],
         }
         res = self.client.post(RECIPES_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -315,7 +315,7 @@ class PrivateRecipeAPITests(TestCase):
         payload = {
             'title': 'vietnamese soup',
             'time_minutes': 25,
-            'price': '2,55',
+            'price': '2.55',
             'ingredients': [{'name': 'lemon'}, {'name': 'fish sauce'}]
         }
         res = self.client.post(RECIPES_URL, payload, format='json')
